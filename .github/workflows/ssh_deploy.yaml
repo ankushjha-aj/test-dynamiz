@@ -14,6 +14,8 @@ on:
         required: true
       SSH_KEY:
         required: true
+      DEV_ENV:
+        required: true
         
 jobs:
   Deploy_To_Server:
@@ -50,7 +52,7 @@ jobs:
         remote_host: ${{ secrets.SERVER_HOST }}
         remote_user: ubuntu
         remote_key: ${{ secrets.SSH_KEY }}
-        
+
     # Creating .env file on the server
     - name: Create .env file
       uses: appleboy/ssh-action@v1.0.0
