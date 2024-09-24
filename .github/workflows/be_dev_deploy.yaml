@@ -1,0 +1,23 @@
+name: BE_Dev_Deploy
+on:
+  push:
+    branches:
+      - develop
+jobs: 
+  # NPM Install 
+  node_install:
+    uses: TestDynamiz/TD_Infra/.github/workflows/node_install.yaml@enable_reusable_workflow
+    secrets:   
+      ENV: ${{ secrets.DEV_ENV }}
+      
+  # Deploy to Dev Server
+  ssh_deploy_to_aws_server: 
+    needs: node_install
+    uses: TestDynamiz/TD_Infra/.github/workflows/ssh_deploy.yaml@enable_reusable_workflow
+    secrets: 
+      SECURITY_GROUP_ID: ${{ secrets.SECURITY_DEV_GROUP_ID }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      SERVER_HOST: ${{ secrets.SERVER_DEV_HOST }}
+      SSH_KEY: ${{ secrets.SSH_DEV_KEY }} 
