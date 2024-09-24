@@ -14,7 +14,7 @@ on:
         required: true
       SSH_KEY:
         required: true
-      DEV_ENV:
+      ENV:
         required: true
         
 jobs:
@@ -61,7 +61,7 @@ jobs:
         username: ubuntu
         key: ${{ secrets.SSH_KEY }}
         script: |
-          echo "${{ secrets.DEV_ENV }}" > /home/ubuntu/project/backend/.env
+          echo "${{ secrets.ENV }}" > /home/ubuntu/project/backend/.env
 
 
     # Removing GitHub Actions IP from Security Group 
