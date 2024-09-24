@@ -1,0 +1,73 @@
+name: SSH Deploy to AWS Server
+on:
+  workflow_call:
+    secrets:
+      SECURITY_GROUP_ID:
+        required: true
+      AWS_REGION:
+        required: true
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      SERVER_HOST:
+        required: true
+      SSH_KEY:
+        required: true
+        
+jobs:
+  Deploy_To_Server:
+    runs-on: ubuntu-latest
+    steps:
+    # Downloading Artifacts
+    - name: Download files from Artifact
+      uses: actions/download-artifact@v4.1.7
+      with:
+        name: NODE_FILES
+        path: ./
+        
+    # To Get Github action IP  
+    - name: Get Github action IP
+      id: ip
+      uses: haythem/public-ip@v1.3
+      
+    # Adding Github Action IP to Security group
+    - name: Add Github Actions IP to Security group
+      run: |
+        aws ec2 authorize-security-group-ingress --group-id ${{ secrets.SECURITY_GROUP_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32 --region ${{ secrets.AWS_REGION }}  
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+
+    # Deploying to server
+    - name: Deploy to server
+      uses: burnett01/rsync-deployments@6.0.0
+      with:
+        switches: -avzr --delete --exclude="public"
+        path: .
+        remote_path: /home/ubuntu/project/backend
+        remote_host: ${{ secrets.SERVER_HOST }}
+        remote_user: ubuntu
+        remote_key: ${{ secrets.SSH_KEY }}
+
+    # Restarting service
+    - name: Restart Service
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ubuntu
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+          cd /home/ubuntu/project/backend
+          TZ='America/Los_Angeles' /usr/bin/pm2 restart all
+
+    # Removing GitHub Actions IP from Security Group 
+    - name: Remove GitHub Actions IP from Security Group
+      run: |
+        aws ec2 revoke-security-group-ingress --group-id ${{ secrets.SECURITY_GROUP_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32 --region ${{ secrets.AWS_REGION }}
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_DEFAULT_REGION: ${{secrets.AWS_REGION }}
+      if: always()
