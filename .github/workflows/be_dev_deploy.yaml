@@ -21,4 +21,4 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       SERVER_HOST: ${{ secrets.SERVER_DEV_HOST }}
       SSH_KEY: ${{ secrets.SSH_DEV_KEY }}
-      DEV_ENV: ${{ secrets.DEV_ENV }}
+      ENV: ${{ secrets.DEV_ENV }}
